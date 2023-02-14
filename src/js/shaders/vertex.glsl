@@ -98,6 +98,8 @@ void main() {
     float noise = cnoise(3.0 * vec3(position.x, position.y, position.z + uTime / 30.));
 
     newPosition.z += hoverState * 10. * sin(dist * 10. + uTime);
+    newPosition.x += hoverState * 20. * noise;
+    newPosition.y += hoverState * 10. * noise;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
 

@@ -3,7 +3,9 @@ precision highp float;
 uniform vec2 uImageSizes;
 uniform vec2 uPlaneSizes;
 uniform vec2 hover;
+uniform float hoverState;
 uniform sampler2D uImage;
+uniform sampler2D uVideo;
 
 varying vec2 vUvs;
 varying float vNoise;
@@ -15,10 +17,11 @@ void main() {
 
     vec2 uv = vec2(vUvs.x * ratio.x + (1.0 - ratio.x) * 0.5, vUvs.y * ratio.y + (1.0 - ratio.y) * 0.5);
 
-    vec4 textureSample = texture2D(uImage, uv);
+    vec4 textureSample = texture2D(uVideo, uv);
 
     color = textureSample.rgb;
     color += 0.03 * vec3(vNoise);
+    color -= vec3(0.0, hoverState, hoverState);
 
     // color = vec3(vNoise);
 

@@ -26,6 +26,8 @@ export default class Sketch {
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
 
+    console.log("INIT", options.dom);
+
     /*
     SETUP 
     */
@@ -57,6 +59,13 @@ export default class Sketch {
 
     this.images = [...document.querySelectorAll("img")];
     this.meshTransforms = [];
+
+    //TRY VIDEO
+    this.video = document.getElementById("video");
+    this.video.play();
+    this.video.addEventListener("play", function () {
+      this.currentTime = 3;
+    });
 
     // Preload images
     const preloadImages = new Promise((resolve, reject) => {
@@ -148,6 +157,7 @@ export default class Sketch {
     this.fadeMaterial = new THREE.ShaderMaterial({
       uniforms: {
         inputTexture: { value: null },
+        uTime: { value: 0 },
       },
       fragmentShader: persFragment,
       vertexShader: persVertex,
@@ -228,12 +238,11 @@ export default class Sketch {
   }
 
   addImages() {
-    this.loader = new THREE.TextureLoader();
-
     this.material = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uImage: { value: 0 },
+        uVideo: { value: null },
         hover: { value: new THREE.Vector2(0.5, 0.5) },
         hoverState: { value: 0 },
         uPlaneSizes: { value: new THREE.Vector2(0, 0) },
@@ -246,6 +255,9 @@ export default class Sketch {
 
     this.materials = [];
 
+    //Video texture
+    let vidTexture = new THREE.VideoTexture(this.video);
+
     this.imageStore = this.images.map((img) => {
       let bounds = img.getBoundingClientRect();
 
@@ -257,7 +269,12 @@ export default class Sketch {
         20,
         20
       );
-      let texture = new THREE.Texture(img);
+
+      let image = new Image();
+
+      //Workaround setting dynamic source
+      image.src = img.src;
+      let texture = new THREE.Texture(image);
       texture.needsUpdate = true;
 
       let material = this.material.clone();
@@ -277,12 +294,15 @@ export default class Sketch {
 
       this.materials.push(material);
 
-      material.uniforms.uImage.value = this.loader.load(img.src);
+      console.log(vidTexture);
+
+      material.uniforms.uImage.value = texture;
+      material.uniforms.uVideo.value = vidTexture;
 
       material.uniforms.uImageSizes.value.x = img.naturalWidth;
       material.uniforms.uImageSizes.value.y = img.naturalHeight;
 
-      console.log(material.uniforms.uImageSizes);
+      // console.log(material.uniforms.uImageSizes);
 
       // let mat2 = new THREE.MeshBasicMaterial({
       //   color: 0xff0000,
@@ -403,16 +423,16 @@ export default class Sketch {
 
       const mouseFactorX = lerp(
         mesh.position.x,
-        mesh.position.x - this.mouse.x * 50,
+        mesh.position.x - this.mouse.x * 250,
         0.4
       );
 
       const mouseFactorY = lerp(
         mesh.position.y,
-        mesh.position.y - this.mouse.y * 50,
+        mesh.position.y - this.mouse.y * 250,
         0.4
       );
-      console.log(mouseFactorX);
+      // console.log(mouseFactorX);
       // mesh.position.add(
       //   new THREE.Vector3(mouseFactorX, -this.mouse.y, 0).multiplyScalar(50)
       // );
@@ -439,6 +459,7 @@ export default class Sketch {
     // fragment shader
     this.fadePlane.material.uniforms.inputTexture.value =
       this.framebuffer1.texture;
+    this.fadePlane.material.uniforms.uTime.value = this.time;
     this.renderer.render(this.fadePlane, this.camera);
 
     // Render our entire scene to Framebuffer 2, on top of the faded out
