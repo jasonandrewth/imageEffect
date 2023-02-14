@@ -1,0 +1,21 @@
+{
+  "name": "image-project",
+  "source": "src/index.html",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build"
+  },
+  "devDependencies": {
+    "@parcel/transformer-glsl": "^2.8.3",
+    "@parcel/transformer-sass": "^2.8.3",
+    "parcel": "^2.8.3"
+  },
+  "dependencies": {
+    "gsap": "^3.11.4",
+    "imagesloaded": "^5.0.0",
+    "normalize-wheel": "^1.0.1",
+    "sass": "^1.58.0",
+    "three": "^0.149.0"
+  }
+}
