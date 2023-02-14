@@ -9,18 +9,15 @@ import { lerp } from "three/src/math/MathUtils";
 //Shaders
 import fragment from "./shaders/fragment.glsl";
 import vertex from "./shaders/vertex.glsl";
-import postprocFragment from "./shaders/postprocFragment.glsl";
+
 import persFragment from "./shaders/persistence/frag.glsl";
 import persVertex from "./shaders/persistence/vert.glsl";
 
 //Post processing
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/Renderpass.js";
-import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { HorizontalBlurShader } from "three/examples/jsm/shaders/HorizontalBlurShader";
-import ocean from "../images/demo-1/1.jpg";
-import { BoxGeometry, SphereGeometry } from "three";
+// import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+// import { RenderPass } from "three/examples/jsm/postprocessing/Renderpass.js";
+// import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+// import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
 export default class Sketch {
   constructor(options) {
@@ -90,40 +87,40 @@ export default class Sketch {
     });
   }
 
-  composerPass() {
-    this.composer = new EffectComposer(this.renderer);
-    this.renderPass = new RenderPass(this.scene, this.camera);
-    this.composer.addPass(this.renderPass);
+  // composerPass() {
+  //   this.composer = new EffectComposer(this.renderer);
+  //   this.renderPass = new RenderPass(this.scene, this.camera);
+  //   this.composer.addPass(this.renderPass);
 
-    //custom shader pass
-    let counter = 0.0;
+  //   //custom shader pass
+  //   let counter = 0.0;
 
-    this.myEffect = {
-      uniforms: {
-        tDiffuse: { value: null },
-        uScrollSpeed: { value: 0 },
-        mousePos: { value: new THREE.Vector2(0, 0) },
-        uTime: { value: 0 },
-      },
-      vertexShader: `
-        varying vec2 vUvs;
-        void main() {
-          vUvs = uv;
+  //   this.myEffect = {
+  //     uniforms: {
+  //       tDiffuse: { value: null },
+  //       uScrollSpeed: { value: 0 },
+  //       mousePos: { value: new THREE.Vector2(0, 0) },
+  //       uTime: { value: 0 },
+  //     },
+  //     vertexShader: `
+  //       varying vec2 vUvs;
+  //       void main() {
+  //         vUvs = uv;
 
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: postprocFragment,
-    };
+  //         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  //       }
+  //     `,
+  //     fragmentShader: postprocFragment,
+  //   };
 
-    this.customPass = new ShaderPass(this.myEffect);
-    this.customPass.renderToScreen = true;
-    this.composer.addPass(this.customPass);
+  //   this.customPass = new ShaderPass(this.myEffect);
+  //   this.customPass.renderToScreen = true;
+  //   this.composer.addPass(this.customPass);
 
-    this.bloomPass = new UnrealBloomPass();
+  //   this.bloomPass = new UnrealBloomPass();
 
-    // this.composer.addPass(this.bloomPass);
-  }
+  //   // this.composer.addPass(this.bloomPass);
+  // }
 
   pingPongSetup() {
     const leftScreenBorder = -innerWidth / 2;
@@ -239,7 +236,6 @@ export default class Sketch {
         uImage: { value: 0 },
         hover: { value: new THREE.Vector2(0.5, 0.5) },
         hoverState: { value: 0 },
-        oceanTexture: { value: this.loader.load(ocean) },
         uPlaneSizes: { value: new THREE.Vector2(0, 0) },
         uImageSizes: { value: new THREE.Vector2(0, 0) },
       },
