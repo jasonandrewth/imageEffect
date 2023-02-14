@@ -315,7 +315,7 @@ export default class Sketch {
     const material = new THREE.MeshPhysicalMaterial({
       color: 0xff0000,
       roughness: 0.15,
-      transmission: 1,
+      transmission: 0.5,
       thickness: 50, // Add refraction!
     });
 
