@@ -234,6 +234,7 @@ export default class Sketch {
         if (intersects.length > 0 && intersects[0].object.userData.draggable) {
           //Set to null if there already is a draggable object selected
           if (this.draggedObj != null) {
+            this.draggedObj.material.color.set(0xff0000);
             this.draggedObj = null;
             return;
           }
@@ -242,6 +243,7 @@ export default class Sketch {
           let draggableObj = intersects[0].object;
 
           this.draggedObj = draggableObj;
+          this.draggedObj.material.color.set(0xffff00);
 
           console.log(draggableObj);
           // draggableObj.position.x += 100;
@@ -371,8 +373,8 @@ export default class Sketch {
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-    const mesh2 = new THREE.Mesh(geometry2, material);
-    const mesh3 = new THREE.Mesh(geometry3, material);
+    const mesh2 = new THREE.Mesh(geometry2, material.clone());
+    const mesh3 = new THREE.Mesh(geometry3, material.clone());
 
     //Add draggable attribute
     mesh.userData.draggable = true;
