@@ -59,6 +59,7 @@ export default class Sketch {
 
     this.images = [...document.querySelectorAll("img")];
     this.meshTransforms = [];
+    this.draggedObj = null;
 
     //TRY VIDEO
     this.video = document.getElementById("video");
@@ -211,7 +212,7 @@ export default class Sketch {
           // console.log(intersects[0]);
           let obj = intersects[0].object;
 
-          console.log(obj);
+          // console.log(obj);
 
           if (obj.geometry instanceof THREE.PlaneGeometry) {
             obj.material.uniforms.hover.value = intersects[0].uv;
@@ -219,6 +220,36 @@ export default class Sketch {
         }
       },
       false
+    );
+
+    window.addEventListener(
+      "click",
+      () => {
+        // update the picking ray with the camera and mouse position
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+        // calculate objects intersecting the picking ray
+        const intersects = this.raycaster.intersectObjects(this.meshes);
+
+        if (intersects.length > 0 && intersects[0].object.userData.draggable) {
+          //Set to null if there already is a draggable object selected
+          if (this.draggedObj != null) {
+            this.draggedObj = null;
+            return;
+          }
+
+          //otherwise make it the draggable object
+          let draggableObj = intersects[0].object;
+
+          this.draggedObj = draggableObj;
+
+          console.log(draggableObj);
+          // draggableObj.position.x += 100;
+        } else {
+          this.draggedObj = null;
+        }
+      },
+      "false"
     );
   }
 
@@ -343,6 +374,11 @@ export default class Sketch {
     const mesh2 = new THREE.Mesh(geometry2, material);
     const mesh3 = new THREE.Mesh(geometry3, material);
 
+    //Add draggable attribute
+    mesh.userData.draggable = true;
+    mesh2.userData.draggable = true;
+    mesh3.userData.draggable = true;
+
     mesh.position.x = -this.width / 4 + 150;
     mesh.position.y = this.height / 4;
     mesh2.position.x = this.width / 2 - 200;
@@ -439,6 +475,24 @@ export default class Sketch {
       mesh.position.setX(mouseFactorX);
       mesh.position.setY(mouseFactorY);
     });
+
+    //TRY DRAGGING
+
+    if (this.draggedObj != null) {
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+
+      const intersects = this.raycaster.intersectObjects(this.meshes);
+
+      if (intersects.length > 0) {
+        for (let o of intersects) {
+          // if (!o.userData.draggable) continue;
+          this.draggedObj.position.x = o.point.x;
+          this.draggedObj.position.y = o.point.y;
+        }
+      }
+      // this.draggedObj.position.x += this.mouse.x;
+      // this.draggedObj.position.y += this.mouse.y;
+    }
 
     //Compser Pass related:
     // this.customPass.uniforms.uScrollSpeed.value = this.scroll.speedTarget;
