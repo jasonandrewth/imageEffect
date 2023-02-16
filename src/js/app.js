@@ -80,6 +80,7 @@ export default class Sketch {
     this.currentScroll = 0;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
+    this.rawMouse = new THREE.Vector2();
 
     preloadImages.then(() => {
       this.scroll = new Scroll();
@@ -198,6 +199,11 @@ export default class Sketch {
         this.mouse.x = (event.clientX / this.width) * 2 - 1;
         this.mouse.y = -(event.clientY / this.height) * 2 + 1;
 
+        this.rawMouse.x = event.clientX / this.width;
+        this.rawMouse.y = event.clientY;
+
+        // console.log(this.rawMouse);
+
         //COMPOSER PASS RELATED
         // this.customPass.uniforms.mousePos.value.x = this.mouse.x;
         // this.customPass.uniforms.mousePos.value.y = this.mouse.y;
@@ -211,6 +217,8 @@ export default class Sketch {
         if (intersects.length > 0) {
           // console.log(intersects[0]);
           let obj = intersects[0].object;
+
+          // console.log(obj.position);
 
           // console.log(obj);
 
@@ -248,6 +256,7 @@ export default class Sketch {
           console.log(draggableObj);
           // draggableObj.position.x += 100;
         } else {
+          this.draggedObj.material.color.set(0xff0000);
           this.draggedObj = null;
         }
       },
@@ -483,14 +492,34 @@ export default class Sketch {
     if (this.draggedObj != null) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
 
-      const intersects = this.raycaster.intersectObjects(this.meshes);
+      const intersects = this.raycaster.intersectObjects(this.scene.children);
+
+      let velocity = new THREE.Vector2(1, 1);
 
       if (intersects.length > 0) {
-        for (let o of intersects) {
-          // if (!o.userData.draggable) continue;
-          this.draggedObj.position.x = o.point.x;
-          this.draggedObj.position.y = o.point.y;
-        }
+        const o = intersects[0];
+        const pos = new THREE.Vector2(
+          this.draggedObj.position.x,
+          this.draggedObj.position.y
+        );
+        const mousePos = new THREE.Vector2(o.point.x, o.point.y);
+
+        let acceleration = new THREE.Vector2().copy(mousePos).sub(pos);
+        // acceleration.setLength(0.1);
+        // acceleration.setX(Math.abs(acceleration.x));
+        // acceleration.setY(-acceleration.y);
+        acceleration.setLength(0.1);
+
+        // console.log(acceleration);
+
+        velocity.add(acceleration);
+        console.log(velocity);
+        velocity.min(new THREE.Vector2(200, 200));
+        // if (!o.userData.draggable) continue;
+        this.draggedObj.position.x += acceleration.x * 20;
+        this.draggedObj.position.y += acceleration.y * 10;
+        // this.draggedObj.position.x = this.mouse.x * 100;
+        // this.draggedObj.position.y = o.point.y;
       }
       // this.draggedObj.position.x += this.mouse.x;
       // this.draggedObj.position.y += this.mouse.y;
