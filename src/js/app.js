@@ -12,15 +12,15 @@ import * as dat from "lil-gui";
 import selectFrag from "./shaders/selective/frag.glsl";
 import selectVert from "./shaders/selective/vert.glsl";
 
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/Renderpass.js";
-import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
-import { CopyShader } from "three/examples/jsm/shaders/CopyShader.js";
-import { HorizontalBlurShader } from "three/examples/jsm/shaders/HorizontalBlurShader.js";
-import { VerticalBlurShader } from "three/examples/jsm/shaders/VerticalBlurShader.js";
-import { BokehShader, BokehDepthShader } from "./bokeh2import.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { GlitchPass } from "three/examples/jsm/postprocessing/GlitchPass.js";
+// import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+// import { RenderPass } from "three/examples/jsm/postprocessing/Renderpass";
+// import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
+// import { CopyShader } from "three/examples/jsm/shaders/CopyShader.js";
+// import { HorizontalBlurShader } from "three/examples/jsm/shaders/HorizontalBlurShader.js";
+// import { VerticalBlurShader } from "three/examples/jsm/shaders/VerticalBlurShader.js";
+// import { BokehShader, BokehDepthShader } from "./bokeh2import.js";
+// import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+// import { GlitchPass } from "three/examples/jsm/postprocessing/GlitchPass.js";
 
 class Sketch {
   constructor(options) {
@@ -63,7 +63,7 @@ class Sketch {
 
     //POST PROCESSING
     // this.composerPass();
-    this.bokehPass();
+    // this.bokehPass();
     this.mouseMovement();
     this.onResize();
 
@@ -191,193 +191,193 @@ class Sketch {
       });
   }
 
-  bokehPass() {
-    //Efect controller idk
-    this.effectController = {
-      enabled: true,
-      jsDepthCalculation: true,
-      shaderFocus: false,
+  // bokehPass() {
+  //   //Efect controller idk
+  //   this.effectController = {
+  //     enabled: true,
+  //     jsDepthCalculation: true,
+  //     shaderFocus: false,
 
-      fstop: 2.2,
-      maxblur: 2.0,
+  //     fstop: 2.2,
+  //     maxblur: 2.0,
 
-      showFocus: true,
-      focalDepth: 2.8,
-      manualdof: false,
-      vignetting: false,
-      depthblur: true,
+  //     showFocus: true,
+  //     focalDepth: 2.8,
+  //     manualdof: false,
+  //     vignetting: false,
+  //     depthblur: true,
 
-      threshold: 0.5,
-      gain: 2.0,
-      bias: 0.5,
-      fringe: 0.7,
+  //     threshold: 0.5,
+  //     gain: 2.0,
+  //     bias: 0.5,
+  //     fringe: 0.7,
 
-      focalLength: 35,
-      noise: true,
-      pentagon: false,
+  //     focalLength: 35,
+  //     noise: true,
+  //     pentagon: false,
 
-      dithering: 0.0001,
-    };
+  //     dithering: 0.0001,
+  //   };
 
-    this.depthShader = BokehDepthShader;
+  //   this.depthShader = BokehDepthShader;
 
-    this.materialDepth = new THREE.ShaderMaterial({
-      uniforms: this.depthShader.uniforms,
-      vertexShader: this.depthShader.vertexShader,
-      fragmentShader: this.depthShader.fragmentShader,
-    });
+  //   this.materialDepth = new THREE.ShaderMaterial({
+  //     uniforms: this.depthShader.uniforms,
+  //     vertexShader: this.depthShader.vertexShader,
+  //     fragmentShader: this.depthShader.fragmentShader,
+  //   });
 
-    this.materialDepth.uniforms["mNear"].value = this.camera.near;
-    this.materialDepth.uniforms["mFar"].value = this.camera.far;
+  //   this.materialDepth.uniforms["mNear"].value = this.camera.near;
+  //   this.materialDepth.uniforms["mFar"].value = this.camera.far;
 
-    //INIT POSTPROCESSING
+  //   //INIT POSTPROCESSING
 
-    this.postprocessing.scene = new THREE.Scene();
+  //   this.postprocessing.scene = new THREE.Scene();
 
-    this.postprocessing.camera = new THREE.OrthographicCamera(
-      this.width / -2,
-      this.width / 2,
-      this.height / 2,
-      this.height / -2,
-      -10000,
-      10000
-    );
-    this.postprocessing.camera.position.z = 100;
+  //   this.postprocessing.camera = new THREE.OrthographicCamera(
+  //     this.width / -2,
+  //     this.width / 2,
+  //     this.height / 2,
+  //     this.height / -2,
+  //     -10000,
+  //     10000
+  //   );
+  //   this.postprocessing.camera.position.z = 100;
 
-    this.postprocessing.scene.add(this.postprocessing.camera);
+  //   this.postprocessing.scene.add(this.postprocessing.camera);
 
-    this.postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget(
-      this.width,
-      this.height
-    );
-    this.postprocessing.rtTextureColor = new THREE.WebGLRenderTarget(
-      this.width,
-      this.height
-    );
+  //   this.postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget(
+  //     this.width,
+  //     this.height
+  //   );
+  //   this.postprocessing.rtTextureColor = new THREE.WebGLRenderTarget(
+  //     this.width,
+  //     this.height
+  //   );
 
-    const bokeh_shader = BokehShader;
+  //   const bokeh_shader = BokehShader;
 
-    this.postprocessing.bokeh_uniforms = THREE.UniformsUtils.clone(
-      bokeh_shader.uniforms
-    );
+  //   this.postprocessing.bokeh_uniforms = THREE.UniformsUtils.clone(
+  //     bokeh_shader.uniforms
+  //   );
 
-    this.postprocessing.bokeh_uniforms["tColor"].value =
-      this.postprocessing.rtTextureColor.texture;
-    this.postprocessing.bokeh_uniforms["tDepth"].value =
-      this.postprocessing.rtTextureDepth.texture;
-    this.postprocessing.bokeh_uniforms["textureWidth"].value = this.width;
-    this.postprocessing.bokeh_uniforms["textureHeight"].value = this.height;
+  //   this.postprocessing.bokeh_uniforms["tColor"].value =
+  //     this.postprocessing.rtTextureColor.texture;
+  //   this.postprocessing.bokeh_uniforms["tDepth"].value =
+  //     this.postprocessing.rtTextureDepth.texture;
+  //   this.postprocessing.bokeh_uniforms["textureWidth"].value = this.width;
+  //   this.postprocessing.bokeh_uniforms["textureHeight"].value = this.height;
 
-    this.postprocessing.materialBokeh = new THREE.ShaderMaterial({
-      uniforms: this.postprocessing.bokeh_uniforms,
-      vertexShader: bokeh_shader.vertexShader,
-      fragmentShader: bokeh_shader.fragmentShader,
-      defines: {
-        RINGS: 3,
-        SAMPLES: 4,
-      },
-    });
+  //   this.postprocessing.materialBokeh = new THREE.ShaderMaterial({
+  //     uniforms: this.postprocessing.bokeh_uniforms,
+  //     vertexShader: bokeh_shader.vertexShader,
+  //     fragmentShader: bokeh_shader.fragmentShader,
+  //     defines: {
+  //       RINGS: 3,
+  //       SAMPLES: 4,
+  //     },
+  //   });
 
-    this.postprocessing.quad = new THREE.Mesh(
-      new THREE.PlaneGeometry(this.width, this.height),
-      this.postprocessing.materialBokeh
-    );
-    this.postprocessing.quad.position.z = -500;
-    this.postprocessing.scene.add(this.postprocessing.quad);
+  //   this.postprocessing.quad = new THREE.Mesh(
+  //     new THREE.PlaneGeometry(this.width, this.height),
+  //     this.postprocessing.materialBokeh
+  //   );
+  //   this.postprocessing.quad.position.z = -500;
+  //   this.postprocessing.scene.add(this.postprocessing.quad);
 
-    //Control effect
-    this.matChanger = function () {
-      for (const e in this.effectController) {
-        if (e in this.postprocessing.bokeh_uniforms) {
-          console.log("loged", e);
-          this.postprocessing.bokeh_uniforms[e].value =
-            this.effectController[e];
-        }
-      }
+  //   //Control effect
+  //   this.matChanger = function () {
+  //     for (const e in this.effectController) {
+  //       if (e in this.postprocessing.bokeh_uniforms) {
+  //         console.log("loged", e);
+  //         this.postprocessing.bokeh_uniforms[e].value =
+  //           this.effectController[e];
+  //       }
+  //     }
 
-      // postprocessing.enabled = effectController.enabled;
-      this.postprocessing.bokeh_uniforms["znear"].value = this.camera.near;
-      this.postprocessing.bokeh_uniforms["zfar"].value = this.camera.far;
-      // this.camera.setFocalLength(this.effectController.focalLength);
-    };
+  //     // postprocessing.enabled = effectController.enabled;
+  //     this.postprocessing.bokeh_uniforms["znear"].value = this.camera.near;
+  //     this.postprocessing.bokeh_uniforms["zfar"].value = this.camera.far;
+  //     // this.camera.setFocalLength(this.effectController.focalLength);
+  //   };
 
-    this.matChanger.bind(this);
-    this.matChanger();
-  }
+  //   this.matChanger.bind(this);
+  //   this.matChanger();
+  // }
 
-  composerPass() {
-    this.bloomLayer = new THREE.Layers();
-    this.bloomLayer.set(this.BLOOM_SCENE);
+  // composerPass() {
+  //   this.bloomLayer = new THREE.Layers();
+  //   this.bloomLayer.set(this.BLOOM_SCENE);
 
-    this.renderPass = new RenderPass(this.scene, this.camera);
+  //   this.renderPass = new RenderPass(this.scene, this.camera);
 
-    this.composer = new EffectComposer(this.renderer);
-    // this.composer.renderToScreen = false;
+  //   this.composer = new EffectComposer(this.renderer);
+  //   // this.composer.renderToScreen = false;
 
-    // Create the horizontal and vertical blur shaders
+  //   // Create the horizontal and vertical blur shaders
 
-    // Create the shader passes for horizontal and vertical blur
-    //this.hBlurPass = new ShaderPass(hBlurShader);
-    this.vBlurPass = new ShaderPass(VerticalBlurShader);
-    this.hBlurPass = new ShaderPass(HorizontalBlurShader);
+  //   // Create the shader passes for horizontal and vertical blur
+  //   //this.hBlurPass = new ShaderPass(hBlurShader);
+  //   this.vBlurPass = new ShaderPass(VerticalBlurShader);
+  //   this.hBlurPass = new ShaderPass(HorizontalBlurShader);
 
-    // Set the sizes of the blur passes
-    this.hBlurPass.uniforms.h.value =
-      (1 / window.innerWidth) * window.devicePixelRatio;
-    this.vBlurPass.uniforms.v.value =
-      (1 / window.innerHeight) * window.devicePixelRatio;
+  //   // Set the sizes of the blur passes
+  //   this.hBlurPass.uniforms.h.value =
+  //     (1 / window.innerWidth) * window.devicePixelRatio;
+  //   this.vBlurPass.uniforms.v.value =
+  //     (1 / window.innerHeight) * window.devicePixelRatio;
 
-    //this.hBlurPass.renderToScreen = true;
-    //this.vBlurPass.renderToScreen = true;
+  //   //this.hBlurPass.renderToScreen = true;
+  //   //this.vBlurPass.renderToScreen = true;
 
-    console.log("pass", this.vBlurPass);
+  //   console.log("pass", this.vBlurPass);
 
-    // Add the blur passes to the composer
-    //Adding passes here
-    this.composer.addPass(this.renderPass);
+  //   // Add the blur passes to the composer
+  //   //Adding passes here
+  //   this.composer.addPass(this.renderPass);
 
-    // this.composer.addPass(this.hBlurPass);
-    // this.composer.addPass(this.vBlurPass);
+  //   // this.composer.addPass(this.hBlurPass);
+  //   // this.composer.addPass(this.vBlurPass);
 
-    const finalPass = new ShaderPass(
-      new THREE.ShaderMaterial({
-        uniforms: {
-          baseTexture: { value: null },
-          blurTexture: { value: this.composer.renderTarget2.texture },
-        },
-        vertexShader: selectVert,
-        fragmentShader: selectFrag,
-        defines: {},
-      }),
-      "baseTexture"
-    );
-    finalPass.needsSwap = true;
+  //   const finalPass = new ShaderPass(
+  //     new THREE.ShaderMaterial({
+  //       uniforms: {
+  //         baseTexture: { value: null },
+  //         blurTexture: { value: this.composer.renderTarget2.texture },
+  //       },
+  //       vertexShader: selectVert,
+  //       fragmentShader: selectFrag,
+  //       defines: {},
+  //     }),
+  //     "baseTexture"
+  //   );
+  //   finalPass.needsSwap = true;
 
-    // this.finalComposer = new EffectComposer(this.renderer);
-    // this.finalComposer.addPass(this.renderPass);
-    // this.finalComposer.addPass(finalPass);
+  //   // this.finalComposer = new EffectComposer(this.renderer);
+  //   // this.finalComposer.addPass(this.renderPass);
+  //   // this.finalComposer.addPass(finalPass);
 
-    //this.bloomPass = new UnrealBloomPass();
-    //this.glitchPass = new GlitchPass();
-    //this.composer.addPass(this.glitchPass);
+  //   //this.bloomPass = new UnrealBloomPass();
+  //   //this.glitchPass = new GlitchPass();
+  //   //this.composer.addPass(this.glitchPass);
 
-    //this.composer.addPass(this.bloomPass);
+  //   //this.composer.addPass(this.bloomPass);
 
-    this.myEffect = {
-      uniforms: {
-        tDiffuse: { value: null },
-        uScrollSpeed: { value: 0 },
-        mousePos: { value: new THREE.Vector2(0, 0) },
-        uTime: { value: 0 },
-      },
-      vertexShader: selectVert,
-      fragmentShader: selectFrag,
-    };
+  //   this.myEffect = {
+  //     uniforms: {
+  //       tDiffuse: { value: null },
+  //       uScrollSpeed: { value: 0 },
+  //       mousePos: { value: new THREE.Vector2(0, 0) },
+  //       uTime: { value: 0 },
+  //     },
+  //     vertexShader: selectVert,
+  //     fragmentShader: selectFrag,
+  //   };
 
-    this.customPass = new ShaderPass(this.myEffect);
-    this.customPass.renderToScreen = true;
-    this.composer.addPass(this.customPass);
-  }
+  //   this.customPass = new ShaderPass(this.myEffect);
+  //   this.customPass.renderToScreen = true;
+  //   this.composer.addPass(this.customPass);
+  // }
 
   //BLOOM / BLUR
   renderBloom() {
@@ -433,13 +433,13 @@ class Sketch {
     // this.finalComposer.setSize(this.width, this.height);
     if (this.renderPass) this.renderPass.setSize(this.width, this.height);
 
-    if (this.postprocessing) {
-      this.postprocessing.rtTextureDepth.setSize(this.width, this.height);
-      this.postprocessing.rtTextureColor.setSize(this.width, this.height);
+    // if (this.postprocessing) {
+    //   this.postprocessing.rtTextureDepth.setSize(this.width, this.height);
+    //   this.postprocessing.rtTextureColor.setSize(this.width, this.height);
 
-      this.postprocessing.bokeh_uniforms["textureWidth"].value = this.width;
-      this.postprocessing.bokeh_uniforms["textureHeight"].value = this.height;
-    }
+    //   this.postprocessing.bokeh_uniforms["textureWidth"].value = this.width;
+    //   this.postprocessing.bokeh_uniforms["textureHeight"].value = this.height;
+    // }
 
     this.viewport = {
       height,
@@ -649,7 +649,7 @@ class Sketch {
 
     //JS DEPTH
 
-    if (this.effectController.jsDepthCalculation) {
+    if (this.effectController && this.effectController.jsDepthCalculation) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
 
       const intersects = this.raycaster.intersectObjects(
@@ -682,7 +682,7 @@ class Sketch {
     }
 
     //Ping Pong
-    if (this.postprocessing.enabled) {
+    if (this.postprocessing && this.postprocessing.enabled) {
       this.renderer.clear();
 
       // render scene into texture
