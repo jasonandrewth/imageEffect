@@ -9,13 +9,21 @@
   "devDependencies": {
     "@parcel/transformer-glsl": "^2.8.3",
     "@parcel/transformer-sass": "^2.8.3",
+    "@types/three": "^0.152.0",
     "parcel": "^2.8.3"
   },
   "dependencies": {
+    "@studio-freight/lenis": "^1.0.11",
     "gsap": "^3.11.4",
     "imagesloaded": "^5.0.0",
+    "lil-gui": "^0.18.1",
     "normalize-wheel": "^1.0.1",
+    "parcel-plugin-static-files-copy": "^2.6.0",
     "sass": "^1.58.0",
-    "three": "^0.149.0"
+    "three": "^0.152.0"
+  },
+  "staticFiles": {
+    "staticPath": "public",
+    "watcherGlob": "**"
   }
 }

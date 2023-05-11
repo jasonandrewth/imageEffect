@@ -41,6 +41,11 @@ img {
 
 canvas {
   display: block;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  position: fixed;
+  top: 0;
 }
 
 .container {
@@ -50,6 +55,13 @@ canvas {
   width: 100vw;
   height: 100vh;
   z-index: -1;
+  touch-action: none;
+}
+
+.test {
+  width: 100vw;
+  height: 100vh;
+  background-color: aqua;
 }
 
 // FRAME
@@ -132,7 +144,7 @@ canvas {
   height: 100%;
   left: 0;
   // overflow: hidden;
-  position: absolute;
+  // position: absolute;
   top: 0;
   width: 100%;
   z-index: 1;
@@ -346,4 +358,24 @@ video {
 #video {
   visibility: hidden;
   display: none;
+}
+
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }

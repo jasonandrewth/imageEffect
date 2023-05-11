@@ -4,6 +4,10 @@
 
 #define M_PI 3.14159265358979323846
 
+mat2 get2dRotateMatrix(float _angle) {
+    return mat2(cos(_angle), -sin(_angle), sin(_angle), cos(_angle));
+}
+
 vec4 permute(vec4 x) {
     return mod(((x * 34.0) + 1.0) * x, 289.0);
 }
@@ -86,22 +90,35 @@ float cnoise(vec3 P) {
 uniform vec2 hover;
 uniform float hoverState;
 uniform float uTime;
+uniform float uScrollSpeed;
 
 varying vec2 vUvs;
 varying float vNoise;
 
 void main() {
+
     vec3 newPosition = position;
+
+    vec3 transformed = vec3(position);
 
     float dist = distance(uv, hover);
 
     float noise = cnoise(3.0 * vec3(position.x, position.y, position.z + uTime / 30.));
 
-    newPosition.z += hoverState * 10. * sin(dist * 10. + uTime);
-    newPosition.x += hoverState * 20. * noise;
-    newPosition.y += hoverState * 10. * noise;
+    float angle = hoverState * 0.1 * position.y * 0.1 + uTime * 0.05;
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+    mat2 rotate = get2dRotateMatrix(angle);
+
+    float clampedSpeed = clamp(abs(uScrollSpeed), -6.0, 6.0);
+
+    float isActive = hoverState > 0.0 ? hoverState : clampedSpeed;
+    transformed.z += isActive * 0.03 * sin(dist * 10. + uTime);
+    transformed.x += isActive * 0.03 * noise;
+    transformed.y += isActive * 0.02 * noise;
+
+    // newPosition.xz = rotate * newPosition.xz;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
 
     vUvs = uv;
     vNoise = hoverState * sin(dist * 10. - uTime);
