@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import imagesLoaded from "imagesloaded";
 import gsap from "gsap";
-import Scroll from "./scroll";
+import Lenis from "@studio-freight/lenis";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import Media from "./media2";
@@ -80,12 +80,17 @@ export default class Sketch {
     });
 
     this.currentScroll = 0;
+
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
     this.rawMouse = new THREE.Vector2();
 
     preloadImages.then(() => {
-      this.scroll = new Scroll();
+      this.lenisScroll = new Lenis({
+        lerp: 0.1,
+        smoothWheel: true,
+      });
+
       this.addImages();
       this.addObjects();
       this.setPosition();
@@ -274,6 +279,8 @@ export default class Sketch {
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
 
+    this.currentScroll = this.lenisScroll.animatedScroll;
+
     // this.setPosition();
 
     this.renderer.setSize(this.width, this.height);
@@ -437,8 +444,9 @@ export default class Sketch {
       mesh.rotation.y = this.time / 30;
     });
 
-    this.scroll.render();
-    this.currentScroll = this.scroll.scrollToRender;
+    // this.scroll.render();
+    this.lenisScroll.raf(this.time);
+    this.currentScroll = this.lenisScroll.animatedScroll;
     this.setPosition();
 
     this.imageStore.forEach((image, i) => {
@@ -538,36 +546,38 @@ export default class Sketch {
       m.uniforms.uTime.value = this.time;
     });
 
-    this.renderer.autoClearColor = false;
-    this.renderer.setRenderTarget(this.framebuffer2);
+    if (true) {
+      this.renderer.autoClearColor = false;
+      this.renderer.setRenderTarget(this.framebuffer2);
 
-    // Render the image buffer associated with Framebuffer 1 to Framebuffer 2
-    // fading it out to pure black by a factor of 0.05 in the fadeMaterial
-    // fragment shader
-    this.fadePlane.material.uniforms.inputTexture.value =
-      this.framebuffer1.texture;
-    this.fadePlane.material.uniforms.uTime.value = this.time;
-    this.renderer.render(this.fadePlane, this.camera);
+      // Render the image buffer associated with Framebuffer 1 to Framebuffer 2
+      // fading it out to pure black by a factor of 0.05 in the fadeMaterial
+      // fragment shader
+      this.fadePlane.material.uniforms.inputTexture.value =
+        this.framebuffer1.texture;
+      this.fadePlane.material.uniforms.uTime.value = this.time;
+      this.renderer.render(this.fadePlane, this.camera);
 
-    // Render our entire scene to Framebuffer 2, on top of the faded out
-    // texture of Framebuffer 1.
-    this.renderer.render(this.scene, this.camera);
-    // this.renderer.clearColor();
+      // Render our entire scene to Framebuffer 2, on top of the faded out
+      // texture of Framebuffer 1.
+      this.renderer.render(this.scene, this.camera);
+      // this.renderer.clearColor();
 
-    // Set the Default Framebuffer (device screen) represented by null as active WebGL framebuffer to render to.
-    this.renderer.setRenderTarget(null);
+      // Set the Default Framebuffer (device screen) represented by null as active WebGL framebuffer to render to.
+      this.renderer.setRenderTarget(null);
 
-    // Copy the pixel contents of Framebuffer 2 by passing them as a texture
-    // to resultPlane and rendering it to the Default Framebuffer (device screen)
-    this.resultPlane.material.map = this.framebuffer2.texture;
-    this.renderer.render(this.resultPlane, this.camera);
+      // Copy the pixel contents of Framebuffer 2 by passing them as a texture
+      // to resultPlane and rendering it to the Default Framebuffer (device screen)
+      this.resultPlane.material.map = this.framebuffer2.texture;
+      this.renderer.render(this.resultPlane, this.camera);
 
-    // Swap Framebuffer 1 and Framebuffer 2
-    const swap = this.framebuffer1;
-    this.framebuffer1 = this.framebuffer2;
-    this.framebuffer2 = swap;
+      // Swap Framebuffer 1 and Framebuffer 2
+      const swap = this.framebuffer1;
+      this.framebuffer1 = this.framebuffer2;
+      this.framebuffer2 = swap;
+    }
 
-    // this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.scene, this.orthoCamera);
     window.requestAnimationFrame(this.render.bind(this));
   }
 }

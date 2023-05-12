@@ -12,6 +12,9 @@ import * as dat from "lil-gui";
 import selectFrag from "./shaders/selective/frag.glsl";
 import selectVert from "./shaders/selective/vert.glsl";
 
+import persFragment from "./shaders/persistence/frag.glsl";
+import persVertex from "./shaders/persistence/vert.glsl";
+
 // import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 // import { RenderPass } from "three/examples/jsm/postprocessing/Renderpass";
 // import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
@@ -64,6 +67,7 @@ class Sketch {
     //POST PROCESSING
     // this.composerPass();
     // this.bokehPass();
+    this.pingPongSetup();
     this.mouseMovement();
     this.onResize();
 
@@ -114,11 +118,18 @@ class Sketch {
   }
 
   createCamera() {
-    this.camera = new THREE.PerspectiveCamera(45, this.width / this.height);
-    this.camera.position.z = 5;
+    // this.camera = new THREE.PerspectiveCamera(45, this.width / this.height);
+    // this.camera.position.z = 5;
+    this.camera = new THREE.PerspectiveCamera(
+      45,
+      this.width / this.height,
+      100,
+      2000
+    );
+    this.camera.position.z = 1500;
 
-    // this.camera.fov =
-    //   2 * Math.atan(this.height / 2 / this.camera.position.z) * (180 / Math.PI);
+    this.camera.fov =
+      2 * Math.atan(this.height / 2 / this.camera.position.z) * (180 / Math.PI);
   }
 
   createScene() {
@@ -148,6 +159,7 @@ class Sketch {
       scroll_effect: false,
       plane_blur: false,
       shadow_cam: false,
+      blur_factor: 0.2,
     };
 
     const that = this;
@@ -189,6 +201,80 @@ class Sketch {
           that.scene.add(that.shadowHelper);
         }
       });
+
+    this.gui
+      .add(this.params, "blur_factor", 0, 1, 0.001)
+      .name("Blur Factor")
+      .onChange(function () {
+        that.fadeMaterial.uniforms.uBlurFactor.value = that.params.blur_factor;
+      });
+
+    //uBlurFactor
+  }
+
+  pingPongSetup() {
+    const leftScreenBorder = -this.width / 2;
+    const rightScreenBorder = this.width / 2;
+    const topScreenBorder = -this.height / 2;
+    const bottomScreenBorder = this.height / 2;
+    // const leftScreenBorder = -innerWidth / 2;
+    // const rightScreenBorder = innerWidth / 2;
+    // const topScreenBorder = -innerHeight / 2;
+    // const bottomScreenBorder = innerHeight / 2;
+    const near = -100;
+    const far = 100;
+    this.orthoCamera = new THREE.OrthographicCamera(
+      leftScreenBorder,
+      rightScreenBorder,
+      topScreenBorder,
+      bottomScreenBorder,
+      near,
+      far
+    );
+    this.orthoCamera.position.z = -10;
+    this.orthoCamera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    this.fullscreenQuadGeometry = new THREE.PlaneGeometry(
+      this.width,
+      this.height
+    );
+
+    this.fadeMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        inputTexture: { value: null },
+        uTime: { value: 0 },
+        uBlurFactor: { value: 0.2 },
+      },
+      fragmentShader: persFragment,
+      vertexShader: persVertex,
+      //persistencevertex
+    });
+
+    this.fadePlane = new THREE.Mesh(
+      this.fullscreenQuadGeometry,
+      this.fadeMaterial
+    );
+
+    // create the resultPlane
+
+    // We will use it simply to copy the contents of fadePlane to the device screen
+
+    this.resultMaterial = new THREE.MeshBasicMaterial({ map: null });
+    this.resultPlane = new THREE.Mesh(
+      this.fullscreenQuadGeometry,
+      this.resultMaterial
+    );
+
+    // Create two extra framebuffers manually
+
+    this.framebuffer1 = new THREE.WebGLRenderTarget(this.width, this.height);
+    this.framebuffer2 = new THREE.WebGLRenderTarget(this.width, this.height);
+
+    this.renderer.setClearColor(0x111111);
+    this.renderer.setRenderTarget(this.framebuffer1);
+    this.renderer.clearColor();
+    this.renderer.setRenderTarget(this.framebuffer2);
+    this.renderer.clearColor();
   }
 
   // bokehPass() {
@@ -400,13 +486,6 @@ class Sketch {
 
         // this.mouse.x = (event.clientX / this.width) * 2 - 1;
         // this.mouse.y = -(event.clientY / this.height) * 2 + 1;
-
-        this.postprocessing.bokeh_uniforms["focusCoords"].value.set(
-          event.clientX / this.width,
-          1 - event.clientY / this.height
-        );
-
-        console.log(this.postprocessing.bokeh_uniforms["focusCoords"].value);
       },
       false
     );
@@ -423,7 +502,10 @@ class Sketch {
 
     const fov = this.camera.fov * (Math.PI / 180);
     const height = 2 * Math.tan(fov / 2) * this.camera.position.z;
+    // const height = 2 * Math.atan(this.height / 2 / this.camera.position.z);
     const width = height * this.camera.aspect;
+
+    // 2 * Math.atan(this.height / 2 / this.camera.position.z) * (180 / Math.PI);
 
     this.camera.updateProjectionMatrix();
 
@@ -432,6 +514,8 @@ class Sketch {
     if (this.composer) this.composer.setSize(this.width, this.height);
     // this.finalComposer.setSize(this.width, this.height);
     if (this.renderPass) this.renderPass.setSize(this.width, this.height);
+
+    this.pingPongSetup();
 
     // if (this.postprocessing) {
     //   this.postprocessing.rtTextureDepth.setSize(this.width, this.height);
@@ -591,21 +675,6 @@ class Sketch {
   //   });
   // }
 
-  saturate(x) {
-    return Math.max(0, Math.min(1, x));
-  }
-
-  linearize(depth) {
-    const zfar = this.camera.far;
-    const znear = this.camera.near;
-    return (-zfar * znear) / (depth * (zfar - znear) - zfar);
-  }
-
-  smoothstep(near, far, depth) {
-    const x = this.saturate((depth - near) / (far - near));
-    return x * x * (3 - 2 * x);
-  }
-
   render() {
     this.time += 0.05;
 
@@ -649,70 +718,72 @@ class Sketch {
 
     //JS DEPTH
 
-    if (this.effectController && this.effectController.jsDepthCalculation) {
-      this.raycaster.setFromCamera(this.mouse, this.camera);
-
-      const intersects = this.raycaster.intersectObjects(
-        this.scene.children,
-        true
-      );
-
-      // console.log(intersects);
-
-      const targetDistance =
-        intersects.length > 0 ? intersects[0].distance : 100;
-
-      //if (intersects.length > 0)
-      //console.log("intersect distance", intersects[0].distance);
-      this.distance += (targetDistance - this.distance) * 0.03;
-
-      // console.log("this distance", this.distance);
-
-      const sdistance = this.smoothstep(
-        this.camera.near,
-        this.camera.far,
-        this.distance
-      );
-
-      const ldistance = this.linearize(1 - sdistance);
-
-      this.postprocessing.bokeh_uniforms["focalDepth"].value = ldistance;
-
-      this.effectController["focalDepth"] = ldistance;
-    }
-
     //Ping Pong
-    if (this.postprocessing && this.postprocessing.enabled) {
-      this.renderer.clear();
+    // if (this.postprocessing && this.postprocessing.enabled) {
+    //   this.renderer.clear();
 
-      // render scene into texture
+    //   // render scene into texture
 
-      this.renderer.setRenderTarget(this.postprocessing.rtTextureColor);
-      this.renderer.clear();
-      this.renderer.render(this.scene, this.camera);
+    //   this.renderer.setRenderTarget(this.postprocessing.rtTextureColor);
+    //   this.renderer.clear();
+    //   this.renderer.render(this.scene, this.camera);
 
-      // render depth into texture
+    //   // render depth into texture
 
-      this.scene.overrideMaterial = this.materialDepth;
-      this.renderer.setRenderTarget(this.postprocessing.rtTextureDepth);
-      this.renderer.clear();
-      this.renderer.render(this.scene, this.camera);
-      this.scene.overrideMaterial = null;
+    //   this.scene.overrideMaterial = this.materialDepth;
+    //   this.renderer.setRenderTarget(this.postprocessing.rtTextureDepth);
+    //   this.renderer.clear();
+    //   this.renderer.render(this.scene, this.camera);
+    //   this.scene.overrideMaterial = null;
 
-      // render bokeh composite
+    //   // render bokeh composite
 
-      this.renderer.setRenderTarget(null);
-      this.renderer.render(
-        this.postprocessing.scene,
-        this.postprocessing.camera
-      );
-    } else {
-      this.scene.overrideMaterial = null;
+    //   this.renderer.setRenderTarget(null);
+    //   this.renderer.render(
+    //     this.postprocessing.scene,
+    //     this.postprocessing.camera
+    //   );
+    // } else {
+    //   this.scene.overrideMaterial = null;
 
-      this.renderer.setRenderTarget(null);
-      this.renderer.clear();
-      this.renderer.render(this.scene, this.camera);
-    }
+    //   this.renderer.setRenderTarget(null);
+    //   this.renderer.clear();
+    //   this.renderer.render(this.scene, this.camera);
+    // }
+
+    /* 
+    //POSTPROCESSING
+    
+    */
+
+    this.renderer.autoClearColor = false;
+    this.renderer.setRenderTarget(this.framebuffer2);
+
+    // Render the image buffer associated with Framebuffer 1 to Framebuffer 2
+    // fading it out to pure black by a factor of 0.05 in the fadeMaterial
+    // fragment shader
+    this.fadePlane.material.uniforms.inputTexture.value =
+      this.framebuffer1.texture;
+    this.fadePlane.material.uniforms.uTime.value = this.time;
+    this.renderer.render(this.fadePlane, this.camera);
+
+    // Render our entire scene to Framebuffer 2, on top of the faded out
+    // texture of Framebuffer 1.
+    this.renderer.render(this.scene, this.camera);
+    // this.renderer.clearColor();
+
+    // Set the Default Framebuffer (device screen) represented by null as active WebGL framebuffer to render to.
+    this.renderer.setRenderTarget(null);
+
+    // Copy the pixel contents of Framebuffer 2 by passing them as a texture
+    // to resultPlane and rendering it to the Default Framebuffer (device screen)
+    this.resultPlane.material.map = this.framebuffer2.texture;
+    this.renderer.render(this.resultPlane, this.camera);
+
+    // Swap Framebuffer 1 and Framebuffer 2
+    const swap = this.framebuffer1;
+    this.framebuffer1 = this.framebuffer2;
+    this.framebuffer2 = swap;
 
     // this.renderer.render(this.scene, this.camera);
 
