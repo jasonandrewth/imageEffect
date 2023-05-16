@@ -1,15 +1,16 @@
 <script src="https://unpkg.com/three@0.139.2/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.11/dist/gsap.min.js"></script>
-<script src="https://unpkg.com/three@0.139.2/examples/js/controls/OrbitControls.js"></script>
 <script src="https://unpkg.com/three@0.139.2/examples/js/loaders/GLTFLoader.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.11/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1/bundled/lenis.min.js"></script>
-<script src="https://unpkg.com/three@0.139.2/examples/js/shaders/BokehShader2.js"></script>
+
+<!-- <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+<script src="https://unpkg.com/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://unpkg.com/three@0.152.2/examples/js/shaders/BokehShader2.js"></script> -->
 
 <!-- Define glb models to be loaded here! -->
 <script>
-  console.log("dop1", THREE.BokehDepthShader);
-  console.log("dop2", THREE.BokehShader);
-
   const objects = [
     //  {
     //  url: "https://keingarten.com/wp-content/uploads/2023/04/Human.glb",
@@ -17,7 +18,7 @@
     //  },
     {
       url: "https://keingarten.com/wp-content/uploads/2023/04/kein_logo_chrome.glb",
-      zIndex: 2,
+      zIndex: 1,
       top: 0.2,
       x: 0.3,
       parallax: 1,
@@ -30,113 +31,10 @@
       parallax: 0.5,
     },
   ];
+
+  const BLUR_FACTOR = 0.18;
 </script>
-<!-- Write your comments here -->
-<script>
-  const lerp = (a, b, n) => (1 - n) * a + n * b;
 
-  //Thx for this Yuri :)
-
-  class Scroll {
-    constructor() {
-      this.DOM = { main: document.querySelector("main") };
-      // the scrollable element
-      // we translate this element when scrolling (y-axis)
-      this.DOM.scrollable = this.DOM.main.querySelector("div[data-scroll]");
-      this.docScroll = 0;
-      this.scrollToRender = 0;
-      this.current = 0;
-      this.ease = 0.1;
-      this.speed = 0;
-      this.speedTarget = 0;
-
-      // set the body's height
-      this.setSize();
-      // set the initial values
-      this.getScroll();
-      this.init();
-      // the <main> element's style needs to be modified
-      this.style();
-      // init/bind events
-      this.initEvents();
-      // start the render loop
-      requestAnimationFrame(() => this.render());
-    }
-
-    init() {
-      // sets the initial value (no interpolation) - translate the scroll value
-      for (const key in this.renderedStyles) {
-        this.current = this.scrollToRender = this.getScroll();
-      }
-      // translate the scrollable element
-      this.setPosition();
-      this.shouldRender = true;
-    }
-
-    destroy() {
-      this.scrollToRender = 0;
-
-      this.DOM.main.style.position = "relative";
-      this.DOM.main.style.height = `${
-        document.querySelector(".lay-content").clientHeight
-      }px`;
-      this.DOM.scrollable.style.transform = `none`;
-      this.DOM.scrollable = null;
-    }
-
-    style() {
-      this.DOM.main.style.position = "fixed";
-      this.DOM.main.style.width = "100%";
-      this.DOM.main.style.height = `${
-        document.querySelector(".lay-content").clientHeight
-      }px`;
-      this.DOM.main.style.top = this.DOM.main.style.left = 0;
-      this.DOM.main.style.overflow = "hidden";
-    }
-
-    getScroll() {
-      this.docScroll = window.pageYOffset || document.documentElement.scrollTop;
-      return this.docScroll;
-    }
-    initEvents() {
-      window.onbeforeunload = function () {
-        window.scrollTo(0, 0);
-      };
-      // on resize reset the body's height
-      window.addEventListener("resize", () => this.setSize());
-      window.addEventListener("scroll", this.getScroll.bind(this));
-    }
-
-    setSize() {
-      // set the heigh of the body in order to keep the scrollbar on the page
-      document.body.style.height = `${this.DOM.scrollable.scrollHeight + 90}px`;
-    }
-
-    setPosition() {
-      // translates the scrollable element
-      if (
-        Math.round(this.scrollToRender) !== Math.round(this.current) ||
-        this.scrollToRender < 10
-      ) {
-        this.DOM.scrollable.style.transform = `translate3d(0,${
-          -1 * this.scrollToRender
-        }px,0)`;
-      }
-    }
-
-    render() {
-      this.speed =
-        Math.min(Math.abs(this.current - this.scrollToRender), 200) / 200;
-      this.speedTarget += (this.speed - this.speedTarget) * 0.2;
-
-      this.current = this.getScroll();
-      this.scrollToRender = lerp(this.scrollToRender, this.current, this.ease);
-
-      // and translate the scrollable element
-      this.setPosition();
-    }
-  }
-</script>
 <!-- Media Class-->
 <script>
   class Media {
@@ -164,7 +62,8 @@
       this.video.style.display = "none";
       this.video.play();
 
-      //this.material = new THREE.MeshBasicMaterial();
+      this.materialBasic = new THREE.MeshStandardMaterial();
+
       this.material = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
@@ -184,7 +83,8 @@
       this.material.uniforms.uVideo.value = vidTexture;
       this.material.uniforms.uImageSizes.value.x = this.video.videoWidth;
       this.material.uniforms.uImageSizes.value.y = this.video.videoHeight;
-      //material.map = vidTexture;
+      //map on test material
+      this.materialBasic.map = vidTexture;
 
       //EVENT LISTENERS
       this.element.addEventListener("mouseenter", () => {
@@ -200,7 +100,7 @@
         });
       });
 
-      this.plane = new THREE.Mesh(this.geometry, this.material);
+      this.plane = new THREE.Mesh(this.geometry, this.materialBasic);
       this.plane.receiveShadow = true;
 
       this.scene.add(this.plane);
@@ -270,6 +170,7 @@
   class ObjectCustom {
     constructor({
       geometry,
+      glb,
       top,
       x,
       z,
@@ -282,6 +183,7 @@
     }) {
       this.geometry = geometry;
       this.material = material;
+      this.glb = glb;
       this.scene = scene;
       this.screen = { height: height, width: width };
       this.viewport = viewport;
@@ -301,10 +203,20 @@
       //   generateMipmaps: false,
       // });
 
+      //const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5, 10);
+
+      const material2 = new THREE.MeshPhysicalMaterial({
+        color: 0xff0000,
+        roughness: 0.15,
+        transmission: 0.5,
+        thickness: 50, // Add refraction!
+      });
+
       this.mesh = new THREE.Mesh(this.geometry, this.material);
       this.mesh.castShadow = true;
 
       this.scene.add(this.mesh);
+      //this.scene.add(this.glb)
     }
 
     createBounds() {
@@ -427,18 +339,34 @@
 
     createLights() {
       //Light
-      this.light = new THREE.DirectionalLight(0xfff0dd, 1);
+      this.light = new THREE.DirectionalLight(0xffffff, 1);
       this.light.position.set(-0.2, 0.5, 5);
       this.light.castShadow = true;
-      this.scene.add(this.light);
+      this.light.shadow.camera.far = 15;
+      this.light.shadow.mapSize.set(1024, 1024);
+      //this.light.shadow.normalBias = 0.05;
 
-      const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
-      this.scene.add(ambientLight);
+      const shadowHelper = new THREE.CameraHelper(this.light.shadow.camera);
+      shadowHelper.name = "shadowHelper";
+
+      this.scene.add(this.light);
+      //this.scene.add(shadowHelper);
+
+      //const ambientLight = new THREE.AmbientLight( 0x404040 ); // soft white light
+      //this.scene.add(new THREE.AmbientLight(0x222222));
     }
 
     createCamera() {
       this.camera = new THREE.PerspectiveCamera(45, this.width / this.height);
       this.camera.position.z = 5;
+
+      //this.camera = new THREE.PerspectiveCamera(
+      //   45,
+      //  this.width / this.height,
+      //   100,
+      //   2000
+      // );
+      // this.camera.position.z = 1500;
 
       // this.camera.fov =
       //   2 * Math.atan(this.height / 2 / this.camera.position.z) * (180 / Math.PI);
@@ -446,6 +374,60 @@
 
     createScene() {
       this.scene = new THREE.Scene();
+    }
+
+    pingPongSetup() {
+      const leftScreenBorder = -this.width / 2;
+      const rightScreenBorder = this.width / 2;
+      const topScreenBorder = -this.height / 2;
+      const bottomScreenBorder = this.height / 2;
+      // const leftScreenBorder = -innerWidth / 2;
+      // const rightScreenBorder = innerWidth / 2;
+      // const topScreenBorder = -innerHeight / 2;
+      // const bottomScreenBorder = innerHeight / 2;
+      const near = -100;
+      const far = 100;
+      this.fullscreenQuadGeometry = new THREE.PlaneGeometry(
+        this.viewport.width,
+        this.viewport.height
+      );
+
+      this.fadeMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          inputTexture: { value: null },
+          uTime: { value: 0 },
+          uBlurFactor: { value: BLUR_FACTOR },
+        },
+        vertexShader: document.getElementById("persistencevertex").textContent,
+        fragmentShader: document.getElementById("persistencefragment")
+          .textContent,
+      });
+
+      this.fadePlane = new THREE.Mesh(
+        this.fullscreenQuadGeometry,
+        this.fadeMaterial
+      );
+
+      // create the resultPlane
+
+      // We will use it simply to copy the contents of fadePlane to the device screen
+
+      this.resultMaterial = new THREE.MeshBasicMaterial({ map: null });
+      this.resultPlane = new THREE.Mesh(
+        this.fullscreenQuadGeometry,
+        this.resultMaterial
+      );
+
+      // Create two extra framebuffers manually
+
+      this.framebuffer1 = new THREE.WebGLRenderTarget(this.width, this.height);
+      this.framebuffer2 = new THREE.WebGLRenderTarget(this.width, this.height);
+
+      this.renderer.setClearColor(0x111111);
+      this.renderer.setRenderTarget(this.framebuffer1);
+      this.renderer.clearColor();
+      this.renderer.setRenderTarget(this.framebuffer2);
+      this.renderer.clearColor();
     }
 
     mouseMovement() {
@@ -488,6 +470,8 @@
       this.lenisScroll.scrollTo(0);
       this.currentScroll = this.lenisScroll.animatedScroll;
 
+      this.pingPongSetup();
+
       if (this.medias) {
         this.medias.forEach((media) =>
           media.onResize({
@@ -528,6 +512,7 @@
 
             let objNew = new ObjectCustom({
               geometry: objGeometry,
+              glb: gltf.scene,
               material: objMaterial,
               scene: that.scene,
               width: that.width,
@@ -595,7 +580,9 @@
       if (this.medias) {
         this.medias.forEach((media) => media.update(this.currentScroll));
         this.medias.forEach((media) => {
-          media.plane.material.uniforms.uTime.value = this.time;
+          if (media.plane.material.uniforms) {
+            media.plane.material.uniforms.uTime.value = this.time;
+          }
         });
       }
 
@@ -612,7 +599,41 @@
         }
       }
 
+      /* 
+    //POSTPROCESSING
+    
+    */
+
+      this.renderer.autoClearColor = false;
+      this.renderer.setRenderTarget(this.framebuffer2);
+
+      // Render the image buffer associated with Framebuffer 1 to Framebuffer 2
+      // fading it out to pure black by a factor of 0.05 in the fadeMaterial
+      // fragment shader
+      this.fadePlane.material.uniforms.inputTexture.value =
+        this.framebuffer1.texture;
+      this.fadePlane.material.uniforms.uTime.value = this.time;
+      this.renderer.render(this.fadePlane, this.camera);
+
+      // Render our entire scene to Framebuffer 2, on top of the faded out
+      // texture of Framebuffer 1.
       this.renderer.render(this.scene, this.camera);
+      // this.renderer.clearColor();
+
+      // Set the Default Framebuffer (device screen) represented by null as active WebGL framebuffer to render to.
+      this.renderer.setRenderTarget(null);
+
+      // Copy the pixel contents of Framebuffer 2 by passing them as a texture
+      // to resultPlane and rendering it to the Default Framebuffer (device screen)
+      this.resultPlane.material.map = this.framebuffer2.texture;
+      this.renderer.render(this.resultPlane, this.camera);
+
+      // Swap Framebuffer 1 and Framebuffer 2
+      const swap = this.framebuffer1;
+      this.framebuffer1 = this.framebuffer2;
+      this.framebuffer2 = swap;
+
+      // this.renderer.render(this.scene, this.camera);
 
       window.requestAnimationFrame(this.render.bind(this));
     }
@@ -844,5 +865,46 @@
       // color = vec3(vNoise);
 
       gl_FragColor = vec4(color.r, color.g, color.b, 1.0);
+  }
+</script>
+
+<script type="x-shader/x-vertex" id="persistencevertex">
+
+  // Declare a varying variable for texture coordinates
+  varying vec2 vUv;
+
+  void main() {
+        // Set each vertex position according to the
+        // orthographic camera position and projection
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+        // Pass the plane texture coordinates as interpolated varying
+        // variable to the fragment shader
+      vUv = uv;
+  }
+</script>
+
+<script type="x-shader/x-fragment" id="persistencefragment">
+  // Pass the texture from Framebuffer 1
+  uniform sampler2D inputTexture;
+  uniform float uTime;
+  uniform float uBlurFactor;
+
+      // Consume the interpolated texture coordinates
+  varying vec2 vUv;
+
+  void main() {
+        // Get pixel color from texture
+      vec4 texColor = texture2D(inputTexture, vUv * 0.999);
+
+        // Our fade-out color
+      vec4 fadeColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+        // this step achieves the actual fading out
+        // mix texColor into fadeColor by a factor of 0.05
+        // you can change the value of the factor and see
+        // the result will change accordingly
+      gl_FragColor = mix(texColor, fadeColor, uBlurFactor);
+      // gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
   }
 </script>

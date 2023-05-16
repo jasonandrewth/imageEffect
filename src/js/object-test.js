@@ -3,6 +3,7 @@ import * as THREE from "three";
 export default class {
   constructor({
     geometry,
+    glb,
     top,
     x,
     z,
@@ -15,6 +16,7 @@ export default class {
   }) {
     this.geometry = geometry;
     this.material = material;
+    this.glb = glb;
     this.scene = scene;
     this.screen = { height: height, width: width };
     this.viewport = viewport;
@@ -34,10 +36,24 @@ export default class {
     //   generateMipmaps: false,
     // });
 
-    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5, 10);
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xff0000,
+    });
+
+    const material2 = new THREE.MeshPhysicalMaterial({
+      color: 0xff0000,
+      roughness: 0.15,
+      transmission: 0.5,
+      thickness: 50, // Add refraction!
+    });
+
+    this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.castShadow = true;
 
     this.scene.add(this.mesh);
+    //this.scene.add(this.glb)
   }
 
   createBounds() {
@@ -64,10 +80,10 @@ export default class {
         this.viewport.height;
   }
 
-  update(y = 0) {
+  update(y) {
     // this.updateScale();
     this.mesh.position.z = this.z;
-    // this.updateX();
+    this.updateX();
     this.updateY(y);
   }
 

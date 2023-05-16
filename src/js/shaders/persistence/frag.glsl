@@ -11,7 +11,7 @@ void main() {
     vec4 texColor = texture2D(inputTexture, vUv * 0.999);
 
       // Our fade-out color
-    vec4 fadeColor = vec4(1.0f, 1.0f, 1.0f, 0.0f);
+    vec4 fadeColor = vec4(1.0, 1.0, 1.0, 0.0);
 
       // this step achieves the actual fading out
       // mix texColor into fadeColor by a factor of 0.05

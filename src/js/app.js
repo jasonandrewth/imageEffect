@@ -67,7 +67,7 @@ class Sketch {
     //POST PROCESSING
     // this.composerPass();
     // this.bokehPass();
-    this.pingPongSetup();
+    // this.pingPongSetup();
     this.mouseMovement();
     this.onResize();
 
@@ -76,7 +76,7 @@ class Sketch {
     this.createMedias();
     this.createBlurPlane();
     // this.setPosition();
-    //   this.pingPongSetup();
+    //this.pingPongSetup();
 
     this.debug();
 
@@ -84,6 +84,10 @@ class Sketch {
     this.render();
 
     this.addEventListeners();
+
+    console.log("here");
+    console.log(this.viewport);
+    console.log(this.width);
   }
 
   createRenderer() {
@@ -102,11 +106,22 @@ class Sketch {
   createLights() {
     //Light
     this.light = new THREE.DirectionalLight(0xffffff, 1);
-    this.light.position.set(-3, 1, 8);
+    this.light.position.set(-0.2, 0.5, 5);
     this.light.castShadow = true;
+
     this.light.shadow.mapSize.set(1024, 1024);
-    this.light.shadow.camera.far = 10;
     this.light.shadow.normalBias = 0.05;
+
+    const leftScreenBorder = -this.width / 2;
+    const rightScreenBorder = this.width / 2;
+    const topScreenBorder = -this.height / 2;
+    const bottomScreenBorder = this.height / 2;
+
+    // this.light.shadow.camera.far = 15;
+    // this.light.shadow.camera.right = rightScreenBorder;
+    // this.light.shadow.camera.left = leftScreenBorder;
+    // this.light.shadow.camera.top = topScreenBorder;
+    // this.light.shadow.camera.bottom = bottomScreenBorder;
 
     this.shadowHelper = new THREE.CameraHelper(this.light.shadow.camera);
     this.shadowHelper.name = "shadowHelper";
@@ -115,21 +130,23 @@ class Sketch {
     // this.scene.add(this.shadowHelper);
 
     // this.scene.add(new THREE.AmbientLight(0x222222));
+    const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
+    // this.scene.add(ambientLight);
   }
 
   createCamera() {
-    // this.camera = new THREE.PerspectiveCamera(45, this.width / this.height);
-    // this.camera.position.z = 5;
-    this.camera = new THREE.PerspectiveCamera(
-      45,
-      this.width / this.height,
-      100,
-      2000
-    );
-    this.camera.position.z = 1500;
+    this.camera = new THREE.PerspectiveCamera(45, this.width / this.height);
+    this.camera.position.z = 5;
+    // this.camera = new THREE.PerspectiveCamera(
+    //   45,
+    //   this.width / this.height,
+    //   100,
+    //   2000
+    // );
+    // this.camera.position.z = 1000;
 
-    this.camera.fov =
-      2 * Math.atan(this.height / 2 / this.camera.position.z) * (180 / Math.PI);
+    // this.camera.fov =
+    //   2 * Math.atan(this.height / 2 / this.camera.position.z) * (180 / Math.PI);
   }
 
   createScene() {
@@ -160,6 +177,9 @@ class Sketch {
       plane_blur: false,
       shadow_cam: false,
       blur_factor: 0.2,
+      light_x: 0,
+      light_y: 1,
+      light_z: 100,
     };
 
     const that = this;
@@ -209,6 +229,37 @@ class Sketch {
         that.fadeMaterial.uniforms.uBlurFactor.value = that.params.blur_factor;
       });
 
+    this.gui
+      .add(
+        this.params,
+        "light_x",
+        -that.viewport.width,
+        that.viewport.width,
+        0.1
+      )
+      .name("light x")
+      .onChange(function () {
+        that.light.position.x = that.params.light_x;
+      });
+    this.gui
+      .add(
+        this.params,
+        "light_y",
+        -that.viewport.height,
+        that.viewport.height,
+        0.1
+      )
+      .name("light y")
+      .onChange(function () {
+        that.light.position.y = that.params.light_y;
+      });
+    this.gui
+      .add(this.params, "light_z", 0, 500, 1)
+      .name("light z")
+      .onChange(function () {
+        that.light.position.z = that.params.light_z;
+      });
+
     //uBlurFactor
   }
 
@@ -235,8 +286,10 @@ class Sketch {
     this.orthoCamera.lookAt(new THREE.Vector3(0, 0, 0));
 
     this.fullscreenQuadGeometry = new THREE.PlaneGeometry(
-      this.width,
-      this.height
+      // this.width,
+      // this.height
+      this.viewport.width,
+      this.viewport.height
     );
 
     this.fadeMaterial = new THREE.ShaderMaterial({
@@ -484,10 +537,58 @@ class Sketch {
         this.mouse.x = (event.clientX - this.width / 2) / (this.width / 2);
         this.mouse.y = -(event.clientY - this.height / 2) / (this.height / 2);
 
-        // this.mouse.x = (event.clientX / this.width) * 2 - 1;
-        // this.mouse.y = -(event.clientY / this.height) * 2 + 1;
+        // update the picking ray with the camera and mouse position
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+        // calculate objects intersecting the picking ray
+        const intersects = this.raycaster.intersectObjects(this.scene.children);
+
+        if (intersects.length > 0) {
+          // console.log(intersects[0]);
+          let obj = intersects[0].object;
+
+          if (obj.geometry instanceof THREE.PlaneGeometry) {
+            // obj.material.uniforms.hover.value = intersects[0].uv;
+            // console.log(obj);
+            // console.log(intersects[0].uv);
+          }
+        }
       },
       false
+    );
+
+    window.addEventListener(
+      "mousedown",
+      () => {
+        // update the picking ray with the camera and mouse position
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+        // calculate objects intersecting the picking ray
+        const intersects = this.raycaster.intersectObjects(this.meshes);
+
+        if (intersects.length > 0) {
+          let obj = intersects[0].object;
+          console.log(obj.uuid);
+
+          // this.objectArray.forEach((object) => {
+          //   console.log(object.mesh.uuid);
+          // });
+
+          const filteredArr = this.objectArray.filter(
+            (o) => o.mesh.uuid === obj.uuid
+          );
+
+          const mainObject = filteredArr[0];
+
+          obj.material.color.set(0xffff00);
+
+          // obj.rotation.x += 20;
+          obj.position.x = this.mouse.x;
+
+          mainObject.update(this.currentScroll + 10);
+        }
+      },
+      "false"
     );
   }
 
@@ -514,8 +615,6 @@ class Sketch {
     if (this.composer) this.composer.setSize(this.width, this.height);
     // this.finalComposer.setSize(this.width, this.height);
     if (this.renderPass) this.renderPass.setSize(this.width, this.height);
-
-    this.pingPongSetup();
 
     // if (this.postprocessing) {
     //   this.postprocessing.rtTextureDepth.setSize(this.width, this.height);
@@ -550,6 +649,8 @@ class Sketch {
 
       this.medias.forEach((media) => media.update(this.currentScroll));
     }
+
+    this.pingPongSetup();
   }
 
   addObjects() {
@@ -558,7 +659,7 @@ class Sketch {
     const objects = ["./glbs/kein_logo_tex.glb"];
 
     const geometry = new RoundedBoxGeometry(0.5, 0.5, 0.5, 16, 20);
-    const geometry2 = new THREE.BoxGeometry(0.5, 0.5, 0.5, 55);
+    const geometry2 = new THREE.BoxGeometry(0.5, 0.5, 0.5, 10);
     const geometry3 = new THREE.TorusKnotGeometry(0.2, 0.2, 20, 20);
 
     const material = new THREE.MeshPhysicalMaterial({
@@ -573,14 +674,14 @@ class Sketch {
     });
 
     const obj1 = new Object({
-      geometry: geometry,
+      geometry: geometry2,
       material: material2,
       scene: this.scene,
       width: this.width,
       height: this.height,
       viewport: this.viewport,
-      top: this.maxScroll.scrollHeight * 0.1,
-      x: this.maxScroll.clientWidth * 0.3,
+      top: this.maxScroll.scrollHeight * 0.5,
+      x: this.maxScroll.clientWidth * 0.7,
       z: 1,
       parallax: 0.5,
     });
@@ -601,13 +702,17 @@ class Sketch {
 
     mesh.position.x = -1;
     mesh.position.y = 1;
-    mesh2.position.z = 2;
+    // mesh2.position.z = 100;
     mesh2.position.x = 1;
-    mesh2.position.y = -1;
+    mesh2.position.x = this.width / 2 - 200;
+    mesh2.position.y = -this.height / 4;
 
-    // this.meshes.push(mesh);
-    this.meshes.push(mesh2);
-    this.meshes.push(mesh3);
+    this.objectArray.forEach((obj) => {
+      this.meshes.push(obj.mesh);
+    });
+
+    // this.meshes.push(mesh2);
+    // this.meshes.push(mesh3);
 
     this.meshes.forEach((mesh) => {
       mesh.castShadow = true;
@@ -617,6 +722,7 @@ class Sketch {
 
   createGeometry() {
     this.planeGeometry = new THREE.PlaneGeometry(1, 1, 20, 20);
+    // createBlurPlane();
   }
 
   createBlurPlane() {
@@ -629,7 +735,11 @@ class Sketch {
       metalness: 0,
       // thickness: 50, // Add refraction!
     });
-    this.blurPlane = new THREE.Mesh(geo, physicMat);
+
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+    });
+    this.blurPlane = new THREE.Mesh(geo, mat);
     this.blurPlane.position.z = 1;
 
     // this.scene.add(this.blurPlane);

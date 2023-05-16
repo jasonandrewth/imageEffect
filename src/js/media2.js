@@ -15,6 +15,14 @@ export default class {
     this.screen = { height: height, width: width };
     this.viewport = viewport;
 
+    //EXPERIMENT VIDEO
+    //TRY VIDEO
+    this.video = document.getElementById("video");
+    this.video.play();
+    this.video.addEventListener("play", function () {
+      this.currentTime = 3;
+    });
+
     this.createMesh();
     this.createBounds();
 
@@ -64,8 +72,15 @@ export default class {
     let texture = new THREE.Texture(image);
     texture.needsUpdate = true;
 
-    //map texture
-    this.material.map = texture;
+    //ONLY IF VIDEO
+    if (this.video) {
+      //Video texture
+      let vidTexture = new THREE.VideoTexture(this.video);
+      this.material.map = vidTexture;
+    } else {
+      //map texture
+      this.material.map = texture;
+    }
 
     //SHADER INSERT
 

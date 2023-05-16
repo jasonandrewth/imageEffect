@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <script type="x-shader/x-vertex" id="persistencevertex">
+
+      // Declare a varying variable for texture coordinates
+      varying vec2 vUv;
+
+      void main() {
+            // Set each vertex position according to the
+            // orthographic camera position and projection
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+            // Pass the plane texture coordinates as interpolated varying
+            // variable to the fragment shader
+          vUv = uv;
+      }
+    </script>
+
+    <script type="x-shader/x-fragment" id="persistencefragment">
+      // Pass the texture from Framebuffer 1
+      uniform sampler2D inputTexture;
+      uniform float uTime;
+      uniform float uBlurFactor;
+
+          // Consume the interpolated texture coordinates
+      varying vec2 vUv;
+
+      void main() {
+            // Get pixel color from texture
+          vec4 texColor = texture2D(inputTexture, vUv * 0.999);
+
+            // Our fade-out color
+          vec4 fadeColor = vec4(0.0, 0.0, 0.0, 0.0);
+
+            // this step achieves the actual fading out
+            // mix texColor into fadeColor by a factor of 0.05
+            // you can change the value of the factor and see
+            // the result will change accordingly
+          gl_FragColor = mix(texColor, fadeColor, uBlurFactor);
+          // gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Hello</h1>
+
+    <div class="demo-1__gallery">
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/1.jpg" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon2.jpeg" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon3.jpeg" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon4.jpeg" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon6.png" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon7.png" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon8.jpeg" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon10.jpeg" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon11.png" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/neon12.jpeg" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/1.jpg" />
+      </figure>
+
+      <figure class="demo-1__gallery__figure">
+        <img class="demo-1__gallery__image" src="./images/demo-1/1.jpg" />
+      </figure>
+    </div>
+
+    <div class="container"></div>
+  </body>
+
+  <script src="https://unpkg.com/three@0.139.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.11/dist/gsap.min.js"></script>
+  <script src="https://unpkg.com/three@0.139.2/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://unpkg.com/three@0.139.2/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1/bundled/lenis.min.js"></script>
+
+  <!-- Media Class-->
+  <script>
+    class Media {
+      constructor({ element, geometry, scene, height, width, viewport }) {
+        this.element = element;
+        this.video = this.element.querySelector("video");
+        this.video.style.opacity = 0;
+        this.geometry = geometry;
+        this.scene = scene;
+        this.screen = { height: height, width: width };
+        this.viewport = viewport;
+
+        this.createMesh();
+        this.createBounds();
+
+        this.onResize();
+      }
+
+      createMesh() {
+        const image = new Image();
+        // const texture = new Texture(this.gl, {
+        //   generateMipmaps: false,
+        // });
+
+        this.video.style.display = "none";
+        this.video.play();
+
+        this.materialBasic = new THREE.MeshBasicMaterial();
+        this.material = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: { value: 0 },
+            uImage: { value: 0 },
+            uVideo: { value: null },
+            hover: { value: new THREE.Vector2(0.5, 0.5) },
+            hoverState: { value: 0 },
+            uPlaneSizes: { value: new THREE.Vector2(0, 0) },
+            uImageSizes: { value: new THREE.Vector2(0, 0) },
+          },
+          vertexShader: document.getElementById("vertexshader").textContent,
+          fragmentShader: document.getElementById("fragmentshader").textContent,
+          // wireframe: true
+        });
+
+        let vidTexture = new THREE.VideoTexture(this.video);
+        this.material.uniforms.uVideo.value = vidTexture;
+        this.material.uniforms.uImageSizes.value.x = this.video.videoWidth;
+        this.material.uniforms.uImageSizes.value.y = this.video.videoHeight;
+        this.materialBasic.map = vidTexture;
+
+        //EVENT LISTENERS
+        this.element.addEventListener("mouseenter", () => {
+          gsap.to(this.material.uniforms.hoverState, {
+            duration: 1,
+            value: 1,
+          });
+        });
+        this.element.addEventListener("mouseout", () => {
+          gsap.to(this.material.uniforms.hoverState, {
+            duration: 1,
+            value: 0,
+          });
+        });
+
+        this.plane = new THREE.Mesh(this.geometry, this.materialBasic);
+        this.plane.receiveShadow = true;
+
+        this.scene.add(this.plane);
+      }
+
+      createBounds() {
+        this.bounds = this.element
+          .querySelector(".thumb-rel")
+          .getBoundingClientRect();
+
+        this.updateScale();
+        this.updateX();
+        this.updateY();
+      }
+
+      updateScale() {
+        this.plane.scale.x =
+          (this.viewport.width * this.bounds.width) / this.screen.width;
+        this.plane.scale.y =
+          (this.viewport.height * this.bounds.height) / this.screen.height;
+
+        this.material.uniforms.uPlaneSizes.value.x = this.plane.scale.x;
+        this.material.uniforms.uPlaneSizes.value.y = this.plane.scale.y;
+      }
+
+      updateX(x = 0) {
+        this.plane.position.x =
+          -(this.viewport.width / 2) +
+          this.plane.scale.x / 2 +
+          ((this.bounds.left - x) / this.screen.width) * this.viewport.width;
+      }
+
+      updateY(y = 0) {
+        this.plane.position.y =
+          this.viewport.height / 2 -
+          this.plane.scale.y / 2 -
+          ((this.bounds.top - y) / this.screen.height) * this.viewport.height;
+
+        // console.log(y, this.plane.position.y);
+      }
+
+      update(y) {
+        this.updateScale();
+        this.updateX();
+        this.updateY(y);
+      }
+
+      /**
+       * Events.
+       */
+      onResize(sizes) {
+        if (sizes) {
+          const { height, width, viewport } = sizes;
+
+          if (height && width) this.screen = { height: height, width: width };
+          if (viewport) {
+            this.viewport = viewport;
+          }
+        }
+
+        this.createBounds();
+      }
+    }
+  </script>
+  <!-- Object Class -->
+  <script>
+    class ObjectCustom {
+      constructor({
+        geometry,
+        glb,
+        top,
+        x,
+        z,
+        parallax,
+        material,
+        scene,
+        height,
+        width,
+        viewport,
+      }) {
+        this.geometry = geometry;
+        this.material = material;
+        this.glb = glb;
+        this.scene = scene;
+        this.screen = { height: height, width: width };
+        this.viewport = viewport;
+        //in pixels
+        this.top = top;
+        this.x = x;
+        this.z = z;
+        this.parallax = parallax;
+
+        this.createMesh();
+
+        this.onResize();
+      }
+
+      createMesh() {
+        // const texture = new Texture(this.gl, {
+        //   generateMipmaps: false,
+        // });
+
+        const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5, 10);
+
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xff0000,
+        });
+
+        const material2 = new THREE.MeshPhysicalMaterial({
+          color: 0xff0000,
+          roughness: 0.15,
+          transmission: 0.5,
+          thickness: 50, // Add refraction!
+        });
+
+        this.mesh = new THREE.Mesh(geometry, material);
+        //this.mesh.castShadow = true;
+
+        this.scene.add(this.mesh);
+        //this.scene.add(this.glb)
+      }
+
+      createBounds() {
+        // this.updateScale();
+        this.updateX();
+        this.updateY();
+      }
+
+      //   updateX() {
+      //     this.mesh.position.x = this.x;
+      //   }
+      updateX(x = 0) {
+        this.mesh.position.x =
+          -(this.viewport.width / 2) -
+          this.mesh.scale.x / 2 +
+          (this.x / this.screen.width) * this.viewport.width;
+      }
+
+      updateY(y = 0) {
+        this.mesh.position.y =
+          this.viewport.height / 2 -
+          this.mesh.scale.y / 2 -
+          (((this.top - y) * this.parallax) / this.screen.height) *
+            this.viewport.height;
+      }
+
+      update(y) {
+        // this.updateScale();
+        this.mesh.position.z = this.z;
+        this.updateX();
+        this.updateY(y);
+      }
+
+      /**
+       * Events.
+       */
+      onResize(sizes) {
+        if (sizes) {
+          const { height, width, viewport } = sizes;
+
+          if (height && width) this.screen = { height: height, width: width };
+          if (viewport) {
+            this.viewport = viewport;
+          }
+        }
+
+        this.createBounds();
+      }
+    }
+  </script>
+
+  <script>
+    class Sketch {
+      constructor(options) {
+        this.time = 0;
+        this.container = options.dom;
+        this.projects = options.projects;
+
+        this.width = this.container.offsetWidth;
+        this.height = this.container.offsetHeight;
+
+        //Mouse
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        //this.target = new THREE.Vector3(0, 0, 0);
+
+        console.log("dimensions width", this.width);
+        console.log("dimensions height", this.height);
+
+        //Loader
+        this.loader = new THREE.GLTFLoader();
+        console.log("loader", this.loader);
+
+        //Mouse
+        this.currentScroll = 0;
+        //this.scroll = new Scroll();
+        this.lenisScroll = new Lenis({
+          lerp: 0.05,
+          smoothWheel: true,
+        });
+
+        //Setup up functions
+        this.createRenderer();
+        this.createCamera();
+        this.createScene();
+        this.createLights();
+
+        this.mouseMovement();
+        this.onResize();
+
+        //this.addObjects();
+        this.createGeometry();
+        if (this.projects.length > 2) {
+          this.createMedias();
+        }
+        // this.setPosition();
+        //   this.pingPongSetup();
+
+        //this.mouseMovement();
+        //this.onResize();
+
+        // this.composerPass();
+        this.render();
+
+        this.addEventListeners();
+      }
+
+      createRenderer() {
+        this.renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+        });
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMapSoft = true;
+        //this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        this.container.appendChild(this.renderer.domElement);
+      }
+
+      createLights() {
+        //Light
+        this.light = new THREE.DirectionalLight(0xffffff, 1);
+        this.light.position.set(-0.2, 0.5, 5);
+        this.light.castShadow = true;
+
+        this.light.shadow.mapSize.set(1024, 1024);
+        this.light.shadow.normalBias = 0.05;
+
+        const shadowHelper = new THREE.CameraHelper(this.light.shadow.camera);
+        shadowHelper.name = "shadowHelper";
+
+        this.scene.add(this.light);
+        this.scene.add(shadowHelper);
+
+        //const ambientLight = new THREE.AmbientLight( 0x404040 ); // soft white light
+        this.scene.add(new THREE.AmbientLight(0x222222));
+      }
+
+      createCamera() {
+        this.camera = new THREE.PerspectiveCamera(45, this.width / this.height);
+        this.camera.position.z = 5;
+
+        //this.camera = new THREE.PerspectiveCamera(
+        //   45,
+        //  this.width / this.height,
+        //   100,
+        //   2000
+        // );
+        // this.camera.position.z = 1500;
+
+        // this.camera.fov =
+        //   2 * Math.atan(this.height / 2 / this.camera.position.z) * (180 / Math.PI);
+      }
+
+      createScene() {
+        this.scene = new THREE.Scene();
+      }
+
+      pingPongSetup() {
+        const leftScreenBorder = -this.width / 2;
+        const rightScreenBorder = this.width / 2;
+        const topScreenBorder = -this.height / 2;
+        const bottomScreenBorder = this.height / 2;
+        // const leftScreenBorder = -innerWidth / 2;
+        // const rightScreenBorder = innerWidth / 2;
+        // const topScreenBorder = -innerHeight / 2;
+        // const bottomScreenBorder = innerHeight / 2;
+        const near = -100;
+        const far = 100;
+        this.orthoCamera = new THREE.OrthographicCamera(
+          leftScreenBorder,
+          rightScreenBorder,
+          topScreenBorder,
+          bottomScreenBorder,
+          near,
+          far
+        );
+        this.orthoCamera.position.z = -10;
+        this.orthoCamera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        this.fullscreenQuadGeometry = new THREE.PlaneGeometry(
+          this.viewport.width,
+          this.viewport.height
+        );
+
+        this.fadeMaterial = new THREE.ShaderMaterial({
+          uniforms: {
+            inputTexture: { value: null },
+            uTime: { value: 0 },
+            uBlurFactor: { value: 0.03 },
+          },
+          vertexShader:
+            document.getElementById("persistencevertex").textContent,
+          fragmentShader: document.getElementById("persistencefragment")
+            .textContent,
+        });
+
+        this.fadePlane = new THREE.Mesh(
+          this.fullscreenQuadGeometry,
+          this.fadeMaterial
+        );
+
+        // create the resultPlane
+
+        // We will use it simply to copy the contents of fadePlane to the device screen
+
+        this.resultMaterial = new THREE.MeshBasicMaterial({ map: null });
+        this.resultPlane = new THREE.Mesh(
+          this.fullscreenQuadGeometry,
+          this.resultMaterial
+        );
+
+        // Create two extra framebuffers manually
+
+        this.framebuffer1 = new THREE.WebGLRenderTarget(
+          this.width,
+          this.height
+        );
+        this.framebuffer2 = new THREE.WebGLRenderTarget(
+          this.width,
+          this.height
+        );
+
+        this.renderer.setClearColor(0x111111);
+        this.renderer.setRenderTarget(this.framebuffer1);
+        this.renderer.clearColor();
+        this.renderer.setRenderTarget(this.framebuffer2);
+        this.renderer.clearColor();
+      }
+
+      mouseMovement() {
+        window.addEventListener(
+          "mousemove",
+          (event) => {
+            if (event.isPrimary === false) return;
+
+            //this.mouse.x = (event.clientX - this.width / 2) / (this.width / 2);
+            //this.mouse.y = -(event.clientY - this.height / 2) / (this.height / 2);
+
+            this.mouse.x = (event.clientX / this.width) * 2 - 1;
+            this.mouse.y = -(event.clientY / this.height) * 2 + 1;
+          },
+          false
+        );
+      }
+
+      onResize() {
+        this.width = this.container.offsetWidth;
+        this.height = this.container.offsetHeight;
+
+        this.renderer.setSize(this.width, this.height);
+
+        this.camera.aspect = this.width / this.height;
+
+        const fov = this.camera.fov * (Math.PI / 180);
+        const height = 2 * Math.tan(fov / 2) * this.camera.position.z;
+        const width = height * this.camera.aspect;
+
+        this.camera.updateProjectionMatrix();
+
+        this.viewport = {
+          height,
+          width,
+        };
+
+        window.scrollTo(0, 0);
+        //this.lenisScroll.reset()
+        this.lenisScroll.scrollTo(0);
+        this.currentScroll = this.lenisScroll.animatedScroll;
+
+        this.pingPongSetup();
+
+        if (this.medias) {
+          this.medias.forEach((media) =>
+            media.onResize({
+              height: this.height,
+              width: this.width,
+              viewport: this.viewport,
+            })
+          );
+        }
+      }
+
+      createGeometry() {
+        this.planeGeometry = new THREE.PlaneGeometry(1, 1, 20, 20);
+      }
+
+      createMedias() {
+        this.mediasElements = document.querySelectorAll(
+          ".demo-1__gallery__figure"
+        );
+
+        this.medias = Array.from(this.mediasElements).map((element) => {
+          let media = new Media({
+            element,
+            geometry: this.planeGeometry,
+            scene: this.scene,
+            width: this.width,
+            height: this.height,
+            viewport: this.viewport,
+          });
+
+          return media;
+        });
+
+        console.log(this.medias);
+      }
+
+      render() {
+        this.time += 0.05;
+        //   this.setPosition();
+        this.lenisScroll.raf(this.time);
+        this.currentScroll = this.lenisScroll.animatedScroll;
+
+        if (this.medias) {
+          this.medias.forEach((media) => media.update(this.currentScroll));
+          this.medias.forEach((media) => {
+            if (media.plane.material.uniforms) {
+              media.plane.material.uniforms.uTime.value = this.time;
+            }
+          });
+        }
+
+        if (this.objMesh !== undefined) {
+          //this.objMesh.rotation.y = this.time * 0.15;
+        }
+
+        if (this.objectArray) {
+          if (this.objectArray.length > 0) {
+            this.objectArray.forEach((obj) => obj.update(this.currentScroll));
+            this.objectArray.forEach(
+              (obj) => (obj.mesh.rotation.y = this.time * 0.2)
+            );
+          }
+        }
+
+        /* 
+      //POSTPROCESSING
+      
+      */
+
+        this.renderer.autoClearColor = false;
+        this.renderer.setRenderTarget(this.framebuffer2);
+
+        // Render the image buffer associated with Framebuffer 1 to Framebuffer 2
+        // fading it out to pure black by a factor of 0.05 in the fadeMaterial
+        // fragment shader
+        this.fadePlane.material.uniforms.inputTexture.value =
+          this.framebuffer1.texture;
+        this.fadePlane.material.uniforms.uTime.value = this.time;
+        this.renderer.render(this.fadePlane, this.camera);
+
+        // Render our entire scene to Framebuffer 2, on top of the faded out
+        // texture of Framebuffer 1.
+        this.renderer.render(this.scene, this.camera);
+        // this.renderer.clearColor();
+
+        // Set the Default Framebuffer (device screen) represented by null as active WebGL framebuffer to render to.
+        this.renderer.setRenderTarget(null);
+
+        // Copy the pixel contents of Framebuffer 2 by passing them as a texture
+        // to resultPlane and rendering it to the Default Framebuffer (device screen)
+        this.resultPlane.material.map = this.framebuffer2.texture;
+        this.renderer.render(this.resultPlane, this.camera);
+
+        // Swap Framebuffer 1 and Framebuffer 2
+        const swap = this.framebuffer1;
+        this.framebuffer1 = this.framebuffer2;
+        this.framebuffer2 = swap;
+
+        // this.renderer.render(this.scene, this.camera);
+
+        window.requestAnimationFrame(this.render.bind(this));
+      }
+
+      /**
+       * Listeners.
+       */
+      addEventListeners() {
+        window.addEventListener("resize", this.onResize.bind(this));
+
+        this.container.addEventListener(
+          "pointermove",
+          this.mouseMovement.bind(this)
+        );
+      }
+    }
+
+    const containerDiv = document.querySelector(".container");
+
+    sketch = new Sketch({
+      dom: containerDiv,
+    });
+
+    //render();
+  </script>
+</html>
